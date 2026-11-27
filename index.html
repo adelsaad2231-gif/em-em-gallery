@@ -130,13 +130,37 @@ const isVid=f=>(f.type||'').startsWith('video/')||/\.(mp4|mov|m4v|webm)$/i.test(
 function vposter(f){return new Promise(res=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';const u=URL.createObjectURL(f);let done=false;const fin=r=>{if(!done){done=true;URL.revokeObjectURL(u);res(r)}};setTimeout(()=>fin(null),8000);
  v.onerror=()=>fin(null);v.onloadeddata=()=>{try{v.currentTime=Math.min(1,(v.duration||2)/10)}catch(e){fin(null)}};
  v.onseeked=()=>{try{const s=Math.min(1,900/Math.max(v.videoWidth,v.videoHeight));const c=document.createElement('canvas');c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);c.getContext('2d').drawImage(v,0,0,c.width,c.height);fin(c)}catch(e){fin(null)}};v.src=u})}
+const canComp=()=>!!(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream);
+async function compressVid(f,onp){
+ const v=document.createElement('video');v.playsInline=true;v.preload='auto';const u=URL.createObjectURL(f);v.src=u;
+ try{await new Promise((ok,no)=>{v.onloadedmetadata=ok;v.onerror=()=>no(new Error('cannot read video'));setTimeout(()=>no(new Error('timeout')),20000)});
+ const dur=v.duration;if(!isFinite(dur)||dur<=0)throw new Error('unknown duration');if(dur>900)throw new Error('toolong');
+ const vb=Math.min(2000000,Math.floor(18*1048576*8*.85/dur)-96000);if(vb<250000)throw new Error('toolong');
+ const sc=Math.min(1,1280/Math.max(v.videoWidth,v.videoHeight));const W=Math.max(2,Math.round(v.videoWidth*sc/2)*2),Hh=Math.max(2,Math.round(v.videoHeight*sc/2)*2);
+ const cv=document.createElement('canvas');cv.width=W;cv.height=Hh;const cx=cv.getContext('2d');const st=cv.captureStream(30);
+ let ac=null;try{ac=new (window.AudioContext||window.webkitAudioContext)();await ac.resume();const src=ac.createMediaElementSource(v);const ds=ac.createMediaStreamDestination();src.connect(ds);ds.stream.getAudioTracks().forEach(t=>st.addTrack(t))}catch(e){ac=null;v.muted=true}
+ const mt=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+ const rec=new MediaRecorder(st,{...(mt?{mimeType:mt}:{}),videoBitsPerSecond:vb,audioBitsPerSecond:96000});const ch=[];rec.ondataavailable=e=>{if(e.data.size)ch.push(e.data)};
+ const fin=new Promise((ok,no)=>{rec.onstop=ok;rec.onerror=()=>no(new Error('recorder error'))});
+ let stop=false;const t0=Date.now();rec.start(1000);await v.play();
+ const draw=()=>{if(stop)return;cx.drawImage(v,0,0,W,Hh);onp(Math.min(99,Math.floor(v.currentTime/dur*100)));if(Date.now()-t0>dur*3000+60000){stop=true;try{rec.stop()}catch(e){}return}requestAnimationFrame(draw)};requestAnimationFrame(draw);
+ await new Promise(ok=>{v.onended=ok;const iv=setInterval(()=>{if(stop){clearInterval(iv);ok()}},500)});
+ if(Date.now()-t0>dur*3000+59000)throw new Error('too slow');
+ stop=true;if(rec.state!=='inactive')rec.stop();await fin;if(ac)try{ac.close()}catch(e){}
+ const b=new Blob(ch,{type:(rec.mimeType||mt||'video/webm').split(';')[0]});return new File([b],'v.'+(b.type.includes('mp4')?'mp4':'webm'),{type:b.type})}
+ finally{URL.revokeObjectURL(u)}}
 const MB=b=>(b/1048576).toFixed(1);
 $('of').onchange=async e=>{const files=[...e.target.files];e.target.value='';$('ow').innerHTML='';items=[];$('oup').style.display='none';msg('Reading '+files.length+' files...');
  if(!vecs)vecs=await Promise.all(urls.map(u=>u?vecOf(u):null));const seen=vecs.filter(Boolean).slice();let dups=0,big_=0;
  for(const f of files){try{const d=document.createElement('div');d.className='it';const cv=document.createElement('canvas');d.appendChild(cv);let it;
    if(isVid(f)){it={vid:true,file:f,dup:false,rot:0};it.poster=await vposter(f);it.cv=cv;it.el=d;const sp=document.createElement('span');
-     if(f.size>60*1048576){it.dup=true;sp.textContent='too big ('+MB(f.size)+' MB, max 60)';d.classList.add('dup')}else{sp.textContent=MB(f.size)+' MB'+(f.size>20*1048576?' (large)':'');if(f.size>20*1048576)big_++}
-     d.appendChild(sp);if(it.dup)dups++;paint(it)}
+     const CT=window.CT||20*1048576,HARD=60*1048576;d.appendChild(sp);$('ow').appendChild(d);
+     if(f.size>CT){if(canComp()&&f.size<1500*1048576){try{sp.textContent='compressing 0%';const r=await compressVid(f,p=>{sp.textContent='compressing '+p+'%';msg('Compressing video '+p+'% ('+MB(f.size)+' MB). Keep this page open and the screen on.')});
+         if(r.size>=f.size&&f.size<=HARD){sp.textContent=MB(f.size)+' MB (kept original)'}else if(r.size>HARD){it.dup=true;sp.textContent='still too big after compressing';d.classList.add('dup')}else{it.file=r;sp.textContent=MB(f.size)+' to '+MB(r.size)+' MB'}}
+         catch(err){if(f.size>HARD||String(err.message)==='toolong'){it.dup=true;sp.textContent=String(err.message)==='toolong'?'too long to compress (max 15 min)':'could not compress this video';d.classList.add('dup')}else{sp.textContent=MB(f.size)+' MB (compression failed, original kept)'}}}
+       else if(f.size>HARD){it.dup=true;sp.textContent='too big ('+MB(f.size)+' MB) and this browser cannot compress, use a smaller video or Chrome';d.classList.add('dup')}else{sp.textContent=MB(f.size)+' MB (large)';big_++}}
+     else sp.textContent=MB(f.size)+' MB';
+     if(it.dup)dups++;paint(it);items.push(it);continue}
    else{const bm=await createImageBitmap(f);it={bm,rot:0,box:trim(bm),dup:false};const c0=render(it);
      const c1=render({bm,rot:0,box:[0,0,bm.width,bm.height]});const rv=[c0,c1].flatMap(c=>[0,1,2,3].map(r=>vecOfCanvas(c,r)));it.dup=seen.some(o=>rv.some(w=>dist(w,o)<0.2));
      if(it.dup){dups++;d.classList.add('dup');const sp=document.createElement('span');sp.textContent='already in gallery';d.appendChild(sp)}else{seen.push(vecOfCanvas(c0,0));d.onclick=()=>{it.rot=(it.rot+1)%4;paint(it)}}
