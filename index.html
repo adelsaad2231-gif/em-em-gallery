@@ -46,11 +46,17 @@ body{font-family:Georgia,'Times New Roman',serif;color:#fff;background:#0d0d10;o
 #selbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:#111e;backdrop-filter:blur(8px);padding:12px;gap:10px;align-items:center;justify-content:center;font-family:system-ui,sans-serif}
 #selbar button{padding:10px 22px;border-radius:22px;border:0;font-size:16px;cursor:pointer;background:#ffffff26;color:#fff}#selbar #seld{background:#ff4d6d}
 #own button{margin:0 4px}
+
+#dupl{display:flex;flex-direction:column;gap:10px;max-width:900px;width:100%}
+.dg{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;border-radius:12px;background:#ffffff10}
+.di{position:relative;width:78px;height:104px;border-radius:8px;overflow:hidden;outline:3px solid #3ddc84;outline-offset:-3px}
+.di.del{outline-color:#ff4d6d;opacity:.8}.di img{width:100%;height:100%;object-fit:cover}.di span{position:absolute;left:0;right:0;bottom:0;background:#000b;font-size:11px;text-align:center;padding:2px}
+#own button{margin:4px}
 </style></head><body>
 <div id="bg"></div>
 <div id="lock"><h1>Em Em ❤️‍🩹</h1><input id="pw" type="password" placeholder="password" autocomplete="off"><button id="go">Open</button><div id="msg"></div></div>
 <div id="app"><div class="t">Em Em ❤️‍🩹</div><div class="s">My home, my peace, my favorite person.</div><div class="g" id="g"></div></div>
-<div id="own"><h2>Add photos</h2><div id="otok" style="display:none;flex-direction:column;gap:10px;align-items:center"><div style="font-size:14px;opacity:.8;text-align:center;max-width:340px">Paste your GitHub token (kept in this browser only)</div><input id="tk" type="password" placeholder="github token" autocomplete="off"><button id="tks" class="pk">Save token</button></div><div id="opick" style="display:none;flex-direction:column;gap:10px;align-items:center"><label class="b">Choose photos or videos<input id="of" type="file" accept="image/*,video/*" multiple hidden></label><div style="font-size:12px;opacity:.6">tap a photo to rotate it</div><div id="ow"></div><button id="oup" class="pk" style="display:none">Upload</button></div><div id="om"></div><div style="display:flex;gap:10px"><button id="odel">Delete photos</button><button id="oforget" style="display:none">Forget token</button><button id="oclose">Close</button></div></div>
+<div id="own"><h2>Add photos</h2><div id="otok" style="display:none;flex-direction:column;gap:10px;align-items:center"><div style="font-size:14px;opacity:.8;text-align:center;max-width:340px">Paste your GitHub token (kept in this browser only)</div><input id="tk" type="password" placeholder="github token" autocomplete="off"><button id="tks" class="pk">Save token</button></div><div id="opick" style="display:none;flex-direction:column;gap:10px;align-items:center"><label class="b">Choose photos or videos<input id="of" type="file" accept="image/*,video/*" multiple hidden></label><div style="font-size:12px;opacity:.6">tap a photo to rotate it</div><div id="ow"></div><button id="oup" class="pk" style="display:none">Upload</button></div><div id="dupl"></div><button id="dupgo" class="pk" style="display:none"></button><div id="om"></div><div style="display:flex;gap:10px"><button id="odel">Delete photos</button><button id="odall">Delete all</button><button id="odup">Find duplicates</button><button id="oforget" style="display:none">Forget token</button><button id="oclose">Close</button></div></div>
 <div id="selbar" style="display:none"><span id="seln">0 selected</span><button id="seld">Delete</button><button id="selc">Cancel</button></div><div id="lb"><div id="x">✕</div><div class="n" style="left:4px" id="pv">‹</div><img id="big"><video id="bv" controls playsinline style="display:none;max-width:92vw;max-height:88vh;border-radius:16px;background:#000"></video><div class="n" style="right:4px" id="nx">›</div><div id="ct"></div></div>
 <script>const D={"salt":"NcxAo0eQhw0kwoLsdwE4MA==","it":250000,"check":{"iv":"Aar//vK3q6WF0DrK","d":"T8Vpxldo1IaGB68sVrWI5iNV6bdbRARZ"},"n":61};
 const REPO='adelsaad2231-gif/em-em-gallery';
@@ -69,9 +75,11 @@ function addTile(e,u){const i=tiles.length;const c=document.createElement('div')
  c.onclick=()=>{if(selMode)window.toggleSel(c);else show(tiles.indexOf(c))};
  tiles.push(c);urls.push(u||'');ents.push(e);$('g').appendChild(c)}
 async function loadEnt(e){try{const f=e.t==='v'?e.p:e.f;if(!f)return null;return URL.createObjectURL(new Blob([await dec(K,await gj(f))],{type:'image/jpeg'}))}catch(err){return undefined}}
+let opening=false;
 async function open_(){
+ if(opening)return;opening=true;
  const pw=$('pw').value,m=$('msg');m.textContent='...';
- try{const k=await key(pw);const chk=await dec(k,D.check);if(new TextDecoder().decode(chk)!=='em-em-ok')throw 0;K=k}catch(e){m.textContent='wrong password';return}
+ try{const k=await key(pw);const chk=await dec(k,D.check);if(new TextDecoder().decode(chk)!=='em-em-ok')throw 0;K=k}catch(e){m.textContent='wrong password';opening=false;return}
  try{
   const bg=await dec(K,await gj('d-bg.json'));$('bg').style.backgroundImage='url('+URL.createObjectURL(new Blob([bg],{type:'image/jpeg'}))+')';
   let man=null;try{const r=await fetch('manifest.json?'+Date.now(),{cache:'no-store'});if(r.ok)man=await r.json()}catch(e){}
@@ -79,7 +87,7 @@ async function open_(){
   NEXT=man.next;const list=man.items;
   $('lock').classList.add('off');$('app').style.display='block';
   for(let s=0;s<list.length;s+=6){const part=list.slice(s,s+6);const res=await Promise.all(part.map(loadEnt));part.forEach((e,j)=>{if(res[j]!==undefined)addTile(e,res[j])})}
- }catch(e){m.textContent='something went wrong, refresh and try again'}}
+ }catch(e){m.textContent='something went wrong, refresh and try again';opening=false}}
 const lb=$('lb'),big=$('big'),bv=$('bv'),ct=$('ct');
 function closeLb(){bv.pause();lb.classList.remove('on')}
 async function show(i){if(!urls.length)return;cur=(i+urls.length)%urls.length;lb.classList.add('on');const e=ents[cur];bv.pause();ct.textContent=(cur+1)+' / '+urls.length;
@@ -130,7 +138,7 @@ $('of').onchange=async e=>{const files=[...e.target.files];e.target.value='';$('
      if(f.size>60*1048576){it.dup=true;sp.textContent='too big ('+MB(f.size)+' MB, max 60)';d.classList.add('dup')}else{sp.textContent=MB(f.size)+' MB'+(f.size>20*1048576?' (large)':'');if(f.size>20*1048576)big_++}
      d.appendChild(sp);if(it.dup)dups++;paint(it)}
    else{const bm=await createImageBitmap(f);it={bm,rot:0,box:trim(bm),dup:false};const c0=render(it);
-     const c1=render({bm,rot:0,box:[0,0,bm.width,bm.height]});const rv=[c0,c1].flatMap(c=>[0,1,2,3].map(r=>vecOfCanvas(c,r)));it.dup=seen.some(o=>rv.some(w=>dist(w,o)<0.35));
+     const c1=render({bm,rot:0,box:[0,0,bm.width,bm.height]});const rv=[c0,c1].flatMap(c=>[0,1,2,3].map(r=>vecOfCanvas(c,r)));it.dup=seen.some(o=>rv.some(w=>dist(w,o)<0.2));
      if(it.dup){dups++;d.classList.add('dup');const sp=document.createElement('span');sp.textContent='already in gallery';d.appendChild(sp)}else{seen.push(vecOfCanvas(c0,0));d.onclick=()=>{it.rot=(it.rot+1)%4;paint(it)}}
      it.cv=cv;it.el=d;paint(it)}
    $('ow').appendChild(d);items.push(it)}catch(err){}}
@@ -160,12 +168,29 @@ window.toggleSel=c=>{if(sel.has(c)){sel.delete(c);c.classList.remove('selx')}els
 function exitSel(){selMode=false;sel.forEach(c=>c.classList.remove('selx'));sel.clear();$('selbar').style.display='none'}
 $('odel').onclick=()=>{$('own').classList.remove('on');selMode=true;sel.clear();selUpd();$('selbar').style.display='flex'};
 $('selc').onclick=exitSel;
-$('seld').onclick=async()=>{if(!sel.size||!tok())return;const n=sel.size;if(!confirm('Delete '+n+' item(s) from the gallery for good?'))return;
- const chosen=[...sel];const idx=chosen.map(c=>tiles.indexOf(c)).filter(i=>i>=0);const gone=new Set(idx);const rest=ents.filter((e,i)=>!gone.has(i));const files=[];idx.forEach(i=>{files.push(ents[i].f);if(ents[i].p)files.push(ents[i].p)});
- $('seld').disabled=true;$('seln').textContent='Removing from list...';
- try{await saveMan(rest,'Remove '+n+' items from list')}catch(err){$('seln').textContent=(err.message||'Failed')+'. Nothing was deleted.';$('seld').disabled=false;return}
+const sleep=ms=>new Promise(z=>setTimeout(z,ms));
+async function removeTiles(chosen,say){const idx=chosen.map(c=>tiles.indexOf(c)).filter(i=>i>=0);if(!idx.length)return{ok:true,failed:0};const gone=new Set(idx);const rest=ents.filter((e,i)=>!gone.has(i));const files=[];idx.forEach(i=>{files.push(ents[i].f);if(ents[i].p)files.push(ents[i].p)});
+ say('Updating the list...');
+ try{await saveMan(rest,'Remove '+idx.length+' items from list')}catch(err){say((err.message||'Failed')+'. Nothing was deleted.');return{ok:false}}
  idx.sort((a,b)=>b-a).forEach(i=>{tiles[i].remove();if(urls[i])URL.revokeObjectURL(urls[i]);tiles.splice(i,1);urls.splice(i,1);ents.splice(i,1)});sel.clear();vecs=null;
- let failed=0,k=0;for(const f of files){k++;$('seln').textContent='Deleting files '+k+' / '+files.length+'...';try{const sha=await shaOf(f);if(sha){const r=await fetch(API+f,{method:'DELETE',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({message:'Delete '+f,sha,branch:'main'})});if(!r.ok)failed++}}catch(err){failed++}}
- $('seld').disabled=false;exitSel();$('om').textContent='';alert(failed?('Removed from the gallery. '+failed+' file(s) could not be deleted from the repo, but they are not shown anymore.'):'Deleted. Others see it after the site refreshes in a few minutes.')};
+ let failed=0,k=0;for(const f of files){k++;say('Deleting files '+k+' / '+files.length+'...');try{const sha=await shaOf(f);if(sha){const r=await fetch(API+f,{method:'DELETE',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({message:'Delete '+f,sha,branch:'main'})});if(!r.ok)failed++}}catch(err){failed++}await sleep(200)}
+ return{ok:true,failed}}
+$('seld').onclick=async()=>{if(!sel.size||!tok())return;const n=sel.size;if(!confirm('Delete '+n+' item(s) from the gallery for good?'))return;
+ $('seld').disabled=true;const r=await removeTiles([...sel],t=>$('seln').textContent=t);$('seld').disabled=false;if(!r.ok)return;exitSel();$('om').textContent='';alert(r.failed?('Removed from the gallery. '+r.failed+' file(s) could not be deleted from the repo, but they are not shown anymore.'):'Deleted. Others see it after the site refreshes in a few minutes.')};
+$('odall').onclick=async()=>{if(!tok()||!tiles.length)return;const a=prompt('This deletes ALL '+tiles.length+' photos and videos from the gallery. Type DELETE to continue.');if(a!=='DELETE'){msg('Cancelled');return}
+ $('odall').disabled=true;const r=await removeTiles([...tiles],msg);$('odall').disabled=false;if(r.ok)msg(r.failed?'Gallery emptied. '+r.failed+' file(s) could not be deleted from the repo but are not shown.':'Gallery emptied.')};
+// ---- find duplicates ----
+const DUPT=0.15;let dupExtra=[];
+function imgInfo(u){return new Promise(res=>{const im=new Image();im.onload=()=>res({im,px:im.naturalWidth*im.naturalHeight});im.onerror=()=>res(null);im.src=u})}
+$('odup').onclick=async()=>{if(!tok()&&!K)return;msg('Scanning '+tiles.length+' items...');$('dupl').innerHTML='';$('dupgo').style.display='none';
+ const inf=await Promise.all(urls.map((u,i)=>ents[i].t==='i'&&u?imgInfo(u):null));
+ const R=inf.map(o=>o?[0,1,2,3].map(r=>vecOfCanvas(o.im,r)):null);const par=inf.map((_,i)=>i);const f=i=>par[i]===i?i:(par[i]=f(par[i]));
+ for(let i=0;i<R.length;i++){if(!R[i])continue;for(let j=i+1;j<R.length;j++){if(!R[j])continue;if(R[i].some(v=>dist(v,R[j][0])<DUPT))par[f(j)]=f(i)}}
+ const groups={};inf.forEach((o,i)=>{if(o){(groups[f(i)]=groups[f(i)]||[]).push(i)}});const gl=Object.values(groups).filter(g=>g.length>1);
+ dupExtra=[];
+ gl.forEach(g=>{g.sort((a,b)=>(inf[b].px-inf[a].px)||(a-b));const row=document.createElement('div');row.className='dg';g.forEach((i,k)=>{const d=document.createElement('div');d.className='di'+(k?' del':' keep');const im=document.createElement('img');im.src=urls[i];d.appendChild(im);const sp=document.createElement('span');sp.textContent=k?'delete':'keep';d.appendChild(sp);row.appendChild(d);if(k)dupExtra.push(tiles[i])});$('dupl').appendChild(row)});
+ if(!gl.length){msg('No duplicates found.');return}
+ msg(gl.length+' duplicate group(s). The largest copy of each is kept. '+dupExtra.length+' extra copies will be deleted.');$('dupgo').style.display='';$('dupgo').textContent='Delete '+dupExtra.length+' extra copies'};
+$('dupgo').onclick=async()=>{if(!dupExtra.length)return;if(!confirm('Delete '+dupExtra.length+' duplicate copies for good?'))return;$('dupgo').disabled=true;const r=await removeTiles(dupExtra,msg);$('dupgo').disabled=false;$('dupgo').style.display='none';$('dupl').innerHTML='';dupExtra=[];if(r.ok)msg(r.failed?'Duplicates removed. '+r.failed+' file(s) could not be deleted from the repo but are not shown.':'Duplicates removed.')};
 })();
 </script></body></html>
