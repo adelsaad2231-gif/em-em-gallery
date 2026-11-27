@@ -101,7 +101,7 @@ function paint(it){const c=render(it);const t=it.cv;const r=c.width/c.height;t.w
 $('of').onchange=async e=>{const files=[...e.target.files];e.target.value='';$('ow').innerHTML='';items=[];$('oup').style.display='none';msg('Reading '+files.length+' photos...');
  if(!vecs)vecs=await Promise.all(urls.map(u=>vecOf(u)));const seen=vecs.filter(Boolean).slice();let dups=0;
  for(const f of files){try{const bm=await createImageBitmap(f);const it={bm,rot:0,box:trim(bm),dup:false};const c0=render(it);const v=vecOfCanvas(c0,0);
-   it.dup=seen.some(o=>[0,1,2,3].some(r=>dist(vecOfCanvas(c0,r),o)<0.35));if(it.dup)dups++;else seen.push(v);
+   const c1=render({bm,rot:0,box:[0,0,bm.width,bm.height]});const rv=[c0,c1].flatMap(c=>[0,1,2,3].map(r=>vecOfCanvas(c,r)));it.dup=seen.some(o=>rv.some(w=>dist(w,o)<0.35));if(it.dup)dups++;else seen.push(v);
    const d=document.createElement('div');d.className='it'+(it.dup?' dup':'');const cv=document.createElement('canvas');d.appendChild(cv);it.cv=cv;it.el=d;
    if(it.dup){const sp=document.createElement('span');sp.textContent='already in gallery';d.appendChild(sp)}
    else d.onclick=()=>{it.rot=(it.rot+1)%4;paint(it)};
