@@ -29,27 +29,40 @@ body{font-family:Georgia,'Times New Roman',serif;color:#fff;background:#0d0d10;o
 .n{position:absolute;top:50%;font-size:54px;opacity:.7;padding:10px 18px;cursor:pointer;user-select:none;transform:translateY(-50%)}
 #x{position:absolute;top:14px;right:20px;font-size:34px;cursor:pointer;padding:6px}
 #ct{position:absolute;bottom:16px;font-size:14px;opacity:.7}
+
+#own{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;gap:12px;z-index:30;background:#0d0d10f2;padding:24px 14px;overflow:auto;font-family:system-ui,sans-serif}
+#own.on{display:flex}#own h2{font-weight:normal;font-family:Georgia,serif}
+#own input[type=password],#own button,#own label.b{padding:11px 22px;border-radius:24px;border:1px solid #fff4;background:#ffffff1f;color:#fff;font-size:16px;cursor:pointer}
+#own .pk{background:#ff7aa8!important;color:#1a0f1a!important;border:0!important}
+#ow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:900px}
+#ow .it{position:relative;width:96px;height:130px;border-radius:10px;overflow:hidden;background:#222;cursor:pointer}
+#ow canvas{width:100%;height:100%;object-fit:cover;transition:transform .2s}
+#ow .it.dup{opacity:.35}#ow .it span{position:absolute;left:0;right:0;bottom:0;background:#000a;font-size:11px;text-align:center;padding:2px}
+#om{font-size:14px;opacity:.85;text-align:center;max-width:420px;min-height:20px}
 </style></head><body>
 <div id="bg"></div>
 <div id="lock"><h1>Em Em ❤️‍🩹</h1><input id="pw" type="password" placeholder="password" autocomplete="off"><button id="go">Open</button><div id="msg"></div></div>
 <div id="app"><div class="t">Em Em ❤️‍🩹</div><div class="s">tap a photo to open it</div><div class="g" id="g"></div></div>
+<div id="own"><h2>Add photos</h2><div id="otok" style="display:none;flex-direction:column;gap:10px;align-items:center"><div style="font-size:14px;opacity:.8;text-align:center;max-width:340px">Paste your GitHub token (kept in this browser only)</div><input id="tk" type="password" placeholder="github token" autocomplete="off"><button id="tks" class="pk">Save token</button></div><div id="opick" style="display:none;flex-direction:column;gap:10px;align-items:center"><label class="b">Choose photos<input id="of" type="file" accept="image/*" multiple hidden></label><div style="font-size:12px;opacity:.6">tap a photo to rotate it</div><div id="ow"></div><button id="oup" class="pk" style="display:none">Upload</button></div><div id="om"></div><div style="display:flex;gap:10px"><button id="oforget" style="display:none">Forget token</button><button id="oclose">Close</button></div></div>
 <div id="lb"><div id="x">✕</div><div class="n" style="left:4px" id="pv">‹</div><img id="big"><div class="n" style="right:4px" id="nx">›</div><div id="ct"></div></div>
 <script>
 const D={"salt":"NcxAo0eQhw0kwoLsdwE4MA==","it":250000,"check":{"iv":"Aar//vK3q6WF0DrK","d":"T8Vpxldo1IaGB68sVrWI5iNV6bdbRARZ"},"n":61};
 const gj=async n=>(await fetch('d-'+n+'.json')).json();
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function key(pw){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
-return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(D.salt),iterations:D.it,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['decrypt'])}
+return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(D.salt),iterations:D.it,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function dec(k,o){const iv=b64(o.iv);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,b64(o.d)))}
-let urls=[],cur=0;
+let urls=[],cur=0,K=null,N=D.n;const REPO='adelsaad2231-gif/em-em-gallery';
 for(let i=0;i<22;i++){const e=document.createElement('div');e.className='h';e.textContent='♥';e.style.left=(i*37%100)+'%';e.style.top=(60+i*13%50)+'%';e.style.fontSize=(14+i%4*8)+'px';e.style.animationDuration=(9+i%5*3)+'s';e.style.animationDelay=(-i*1.3)+'s';document.body.appendChild(e)}
+function addTile(u){const i=urls.length;urls.push(u);const g=document.getElementById('g');
+ const c=document.createElement('div');c.className='c';c.style.setProperty('--r',((i%5-2)*0.8)+'deg');c.style.setProperty('--d',(Math.min(i,40)*0.12)+'s');c.innerHTML='<img>';c.firstChild.src=u;c.onclick=()=>show(i);g.appendChild(c)}
 async function open_(){
  const pw=document.getElementById('pw').value,m=document.getElementById('msg');m.textContent='...';
- try{const k=await key(pw);const chk=await dec(k,D.check);if(new TextDecoder().decode(chk)!=='em-em-ok')throw 0;
+ try{const k=await key(pw);K=k;const chk=await dec(k,D.check);if(new TextDecoder().decode(chk)!=='em-em-ok')throw 0;
   const bg=await dec(k,await gj('bg'));document.getElementById('bg').style.backgroundImage='url('+URL.createObjectURL(new Blob([bg],{type:'image/jpeg'}))+')';
   const g=document.getElementById('g');
-  for(let i=0;i<D.n;i++){const u=URL.createObjectURL(new Blob([await dec(k,await gj(String(i)))],{type:'image/jpeg'}));urls.push(u);
-   const c=document.createElement('div');c.className='c';c.style.setProperty('--r',((i%5-2)*0.8)+'deg');c.style.setProperty('--d',(i*0.12)+'s');c.innerHTML='<img>';c.firstChild.src=u;c.onclick=()=>show(i);g.appendChild(c)}
+  try{const r=await fetch('count.json?'+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();if(j.n>N)N=j.n}}catch(e){}
+  for(let i=0;i<N;i++){try{const u=URL.createObjectURL(new Blob([await dec(k,await gj(String(i)))],{type:'image/jpeg'}));addTile(u)}catch(e){N=i;break}}
   document.getElementById('lock').classList.add('off');document.getElementById('app').style.display='block';
  }catch(e){m.textContent='wrong password'}}
 function show(i){cur=(i+urls.length)%urls.length;lb.classList.add('on');big.src=urls[cur];ct.textContent=(cur+1)+' / '+urls.length}
@@ -59,4 +72,50 @@ lb.onclick=e=>{if(e.target===lb)lb.classList.remove('on')};
 document.addEventListener('keydown',e=>{if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1)});
 let sx=0;lb.addEventListener('touchstart',e=>sx=e.touches[0].clientX);lb.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)show(cur+(d<0?1:-1))});
 go.onclick=open_;pw.addEventListener('keydown',e=>{if(e.key==='Enter')open_()});
+
+// owner-only: tap the title 5 times
+(()=>{
+const $=id=>document.getElementById(id);
+let taps=0,tt=0;document.querySelector('.t').addEventListener('click',()=>{const n=Date.now();taps=n-tt<1500?taps+1:1;tt=n;if(taps>=5){taps=0;openOwn()}});
+const API='https://api.github.com/repos/'+REPO+'/contents/';
+const tok=()=>localStorage.getItem('emgh')||'';
+const msg=t=>$('om').textContent=t;
+let items=[],vecs=null;
+function view(){const has=!!tok();$('otok').style.display=has?'none':'flex';$('opick').style.display=has?'flex':'none';$('oforget').style.display=has?'':'none'}
+async function openOwn(){$('own').classList.add('on');msg('');view();if(tok()&&!vecs)vecs=await Promise.all(urls.map(u=>vecOf(u)))}
+$('oclose').onclick=()=>$('own').classList.remove('on');
+$('oforget').onclick=()=>{localStorage.removeItem('emgh');view();msg('Token removed from this browser')};
+$('tks').onclick=async()=>{const t=$('tk').value.trim();if(!t)return;msg('Checking token...');
+ try{const r=await fetch('https://api.github.com/repos/'+REPO,{headers:{Authorization:'Bearer '+t}});if(!r.ok)throw 0;const j=await r.json();if(j.permissions&&!j.permissions.push)throw 1;localStorage.setItem('emgh',t);$('tk').value='';msg('Token saved');view();if(!vecs)vecs=await Promise.all(urls.map(u=>vecOf(u)))}
+ catch(e){msg('That token does not work for this gallery. Check it has access to the em-em-gallery repo with Contents: read and write.')}};
+function vecOfCanvas(c,rot){const t=document.createElement('canvas');t.width=t.height=16;const x=t.getContext('2d');x.translate(8,8);x.rotate(rot*Math.PI/2);x.drawImage(c,-8,-8,16,16);const d=x.getImageData(0,0,16,16).data;const a=[];for(let i=0;i<d.length;i+=4)a.push(.3*d[i]+.59*d[i+1]+.11*d[i+2]);const m=a.reduce((p,q)=>p+q,0)/a.length;const sd=Math.sqrt(a.reduce((p,q)=>p+(q-m)**2,0)/a.length)+1e-6;return a.map(v=>(v-m)/sd)}
+function vecOf(u){return new Promise(res=>{const im=new Image();im.onload=()=>res(vecOfCanvas(im,0));im.onerror=()=>res(null);im.src=u})}
+const dist=(a,b)=>a.reduce((p,q,i)=>p+Math.abs(q-b[i]),0)/a.length;
+function trim(bm){const w=bm.width,h=bm.height,s=Math.min(1,300/Math.max(w,h)),cw=Math.max(1,Math.round(w*s)),ch=Math.max(1,Math.round(h*s));const c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');x.drawImage(bm,0,0,cw,ch);const d=x.getImageData(0,0,cw,ch).data;
+ const rm=new Array(ch).fill(0),cm=new Array(cw).fill(0);for(let y=0;y<ch;y++)for(let i=0;i<cw;i++){const p=(y*cw+i)*4,l=.3*d[p]+.59*d[p+1]+.11*d[p+2];rm[y]+=l/cw;cm[i]+=l/ch}
+ let y0=rm.findIndex(v=>v>12),y1=ch-1-[...rm].reverse().findIndex(v=>v>12),x0=cm.findIndex(v=>v>12),x1=cw-1-[...cm].reverse().findIndex(v=>v>12);
+ if(y0<0||x0<0||y1<=y0||x1<=x0)return[0,0,w,h];if(y0<3&&x0<3&&y1>ch-4&&x1>cw-4)return[0,0,w,h];
+ return[Math.round(x0/s),Math.round(y0/s),Math.round((x1+1)/s)-Math.round(x0/s),Math.round((y1+1)/s)-Math.round(y0/s)]}
+function render(it){const[sx,sy,sw,sh]=it.box;const rot=it.rot%2;const sc=Math.min(1,900/Math.max(sw,sh));const w=Math.round(sw*sc),h=Math.round(sh*sc);const c=document.createElement('canvas');c.width=rot?h:w;c.height=rot?w:h;const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(it.rot*Math.PI/2);x.drawImage(it.bm,sx,sy,sw,sh,-w/2,-h/2,w,h);return c}
+function paint(it){const c=render(it);const t=it.cv;const r=c.width/c.height;t.width=96*2;t.height=130*2;const x=t.getContext('2d');x.fillStyle='#222';x.fillRect(0,0,t.width,t.height);const s=Math.max(t.width/c.width,t.height/c.height);x.drawImage(c,(t.width-c.width*s)/2,(t.height-c.height*s)/2,c.width*s,c.height*s)}
+$('of').onchange=async e=>{const files=[...e.target.files];e.target.value='';$('ow').innerHTML='';items=[];$('oup').style.display='none';msg('Reading '+files.length+' photos...');
+ if(!vecs)vecs=await Promise.all(urls.map(u=>vecOf(u)));const seen=vecs.filter(Boolean).slice();let dups=0;
+ for(const f of files){try{const bm=await createImageBitmap(f);const it={bm,rot:0,box:trim(bm),dup:false};const c0=render(it);const v=vecOfCanvas(c0,0);
+   it.dup=seen.some(o=>[0,1,2,3].some(r=>dist(vecOfCanvas(c0,r),o)<0.35));if(it.dup)dups++;else seen.push(v);
+   const d=document.createElement('div');d.className='it'+(it.dup?' dup':'');const cv=document.createElement('canvas');d.appendChild(cv);it.cv=cv;it.el=d;
+   if(it.dup){const sp=document.createElement('span');sp.textContent='already in gallery';d.appendChild(sp)}
+   else d.onclick=()=>{it.rot=(it.rot+1)%4;paint(it)};
+   paint(it);$('ow').appendChild(d);items.push(it)}catch(err){}}
+ const n=items.filter(i=>!i.dup).length;msg(n+' new'+(dups?', '+dups+' duplicates skipped':'')+'. Tap a sideways photo to rotate it, then Upload.');$('oup').style.display=n?'':'none'};
+const toB64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
+async function put(path,content,msgText,sha){for(let a=0;a<3;a++){const r=await fetch(API+path,{method:'PUT',headers:{Authorization:'Bearer '+tok(),'Content-Type':'application/json'},body:JSON.stringify({message:msgText,content,branch:'main',...(sha?{sha}:{})})});if(r.ok)return r.json();if(r.status===401||r.status===403||r.status===404)throw new Error('Token was rejected by GitHub ('+r.status+')');if(r.status===422)throw new Error('File already exists: '+path);await new Promise(z=>setTimeout(z,1500))}throw new Error('Upload failed for '+path)}
+$('oup').onclick=async()=>{const todo=items.filter(i=>!i.dup);if(!todo.length||!K)return;$('oup').style.display='none';let n=N,done=0;
+ try{for(const it of todo){msg('Uploading '+(done+1)+' of '+todo.length+'...');const c=render(it);const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.8));const buf=new Uint8Array(await blob.arrayBuffer());
+   const iv=crypto.getRandomValues(new Uint8Array(12));const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},K,buf));
+   const json=JSON.stringify({iv:toB64(iv),d:toB64(ct)});await put('d-'+n+'.json',btoa(json),'Add photo '+n);
+   addTile(URL.createObjectURL(blob));n++;done++;it.el.remove()}
+  let sha;const g=await fetch(API+'count.json?ref=main&t='+Date.now(),{headers:{Authorization:'Bearer '+tok()}});if(g.ok)sha=(await g.json()).sha;
+  await put('count.json',btoa(JSON.stringify({n})),'Update count to '+n,sha);N=n;vecs=null;msg('Done! '+done+' photos added. They show up for everyone in a few minutes.');items=[]}
+ catch(err){N=n;msg((err&&err.message||'Something went wrong')+'. '+done+' uploaded before the error; try again to add the rest.');$('oup').style.display=''}};
+})();
 </script></body></html>
